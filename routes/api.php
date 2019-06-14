@@ -19,5 +19,6 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::get('/invoices', 'InvoiceController@index');
 Route::post('/invoice', 'InvoiceController@store');
+Route::put('/invoice/{id}', 'InvoiceController@update');
 Route::get('/invoice/{id}', 'InvoiceController@show');
 Route::delete('/invoice/{id}', 'InvoiceController@destroy');

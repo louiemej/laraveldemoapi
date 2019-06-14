@@ -19,6 +19,7 @@ class CreatePaymentsTable extends Migration
             $table->string('receipt_no');
             $table->string('in_payment_of')->nullable();
             $table->double('amount');
+            $table->integer('status_id')->default(1);
             $table->timestamps();
         });
     }

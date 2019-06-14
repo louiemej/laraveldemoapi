@@ -50,9 +50,37 @@ class Invoice extends FormRequest
         for ($i = 0; $i < count($this->lines); $i++) {
             $rules['lines.' . $i . '.description'] = 'required';
             $rules['lines.' . $i . '.quantity'] = 'required|integer';
-            $rules['lines.' . $i . '.price'] = 'required';
+            // $rules['lines.' . $i . '.price'] = 'required|integer';
         }
 
         return $rules;
+    }
+
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        // return [
+        //     'title.required' => 'A title is required',
+        //     'body.required'  => 'A message is required',
+        // ];
+
+        $messages = [];
+        $messages['invoice.sold_to.required'] = 'This field is required';
+        $messages['invoice.business_style.required'] = 'This field is required';
+        $messages['invoice.created_at.required'] = 'This field is required';
+        $messages['invoice.address.required'] = 'This field is required';
+        for ($i = 0; $i < count($this->lines); $i++) {
+            $messages['lines.' . $i . '.description.required'] = 'This field is required';
+            $messages['lines.' . $i . '.quantity.required'] = 'This field is required';
+            $messages['lines.' . $i . '.price.required'] = 'This field is required';
+            $messages['lines.' . $i . '.quantity.integer'] = 'This field must be an integer';
+            $messages['lines.' . $i . '.price.integer'] = 'This field must be an integer';
+        }
+
+        return $messages;
     }
 }

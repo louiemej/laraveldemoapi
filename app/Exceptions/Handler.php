@@ -66,11 +66,11 @@ class Handler extends ExceptionHandler
                 'errors' => 'Page not found'
             ], Response::HTTP_NOT_FOUND);
         }
-        if($exception instanceof QueryException) {
-            return response()->json([
-                'errors' => 'Internal Server Error'
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+            if($exception instanceof QueryException) {
+                return response()->json([
+                    'errors' => 'Internal Server Error'
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
         return parent::render($request, $exception);
     }
 }

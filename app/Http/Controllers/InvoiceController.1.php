@@ -24,7 +24,6 @@ class InvoiceController extends Controller
         $invoices = Invoice::with(['payment', 'items'])->get();
         $apiResponse = InvoiceResource::collection($invoices);
         return $apiResponse->toJson();
-        // return $apiResponse;
     }
 
     /**
@@ -121,7 +120,7 @@ class InvoiceController extends Controller
 
             $line_ids = [];
             $grand_total = 0;
-            $is_thesame_payment = true;
+            $is_thesame_payment = false;
             foreach($data['lines'] as $line) {
                 if(array_key_exists('id',$line)) {
                     $item = Item::findOrFail($line['id']);
@@ -138,14 +137,16 @@ class InvoiceController extends Controller
                 if(array_key_exists('id',$line)) {
                     if($item->isDirty()) {
                         $item->save();
-                        $is_thesame_payment = false;
+                        $is_thesame_payment = true;
                     }
                     array_push($line_ids, $line['id']);
                 } else {
                     $item->save();
-                    $is_thesame_payment = false;
+                    $is_thesame_payment = true;
                 }
             }
+
+            // return $grand_total;
             
             $array_difference = array_diff($ids, $line_ids);
             $to_be_delete = [];
@@ -155,111 +156,25 @@ class InvoiceController extends Controller
 
             $to_be = Item::whereIn('id', $to_be_delete)->delete();
         
-            if(!$is_thesame_payment) {
-                $payment = Payment::findOrFail($data['payment']['id']);
-                $payment->status_id = 0;
-                $payment->save();
-            } else {
-                $payment = new Payment();
-                $payment->invoice_id = $invoice->id;
-                $payment->receipt_no = $this->generateRandomString(2, 10);
-                $payment->in_payment_of = 'Items';
-                $payment->amount = $grand_total;
+            $payment = Payment::findOrFail($data['payment']['id']);
+            $payment->invoice_id = $data['payment']['invoice_id'];
+            $payment->receipt_no = $data['payment']['receipt_no'];
+            $payment->in_payment_of = $data['payment']['in_payment_of'];
+            $payment->amount = $data['payment']['amount'];
+            $payment->status_id = $data['payment']['status_id'];
+
+            if($payment->isDirty()) {
                 $payment->save();
             }
+
             return $invoice;
+
         }, 5);
         
+
         $apiResponse = new InvoiceResource($invoice);
         return response($apiResponse->toJson(), Response::HTTP_CREATED);
     }
-
-    // /**
-    //  * Update the specified resource in storage.
-    //  *
-    //  * @param  \Illuminate\Http\Request  $request
-    //  * @param  \App\Models\Invoice  $invoice
-    //  * @return \Illuminate\Http\Response
-    //  */
-    // public function update($id, InvoiceRequest $request)
-    // {
-    //     $data = json_decode($request->getContent(), true);
-
-    //     $invoice = DB::transaction(function () use ($data) {
-    //         $date = new \DateTime($data['invoice']['created_at']);
-    //         $result = $date->format('Y-m-d H:i:s');
-    //         $invoice = Invoice::findOrFail($data['invoice']['id']);
-    //         $invoice->sold_to = $data['invoice']['sold_to'];
-    //         $invoice->business_style = $data['invoice']['business_style'];
-    //         $invoice->created_at = $result;
-    //         $invoice->address = $data['invoice']['address'];
-    //         if($invoice->isDirty()) {
-    //             $invoice->save();
-    //         }
-
-    //         $item_ids = Item::select('id')->where('invoice_id', $invoice->id)->get();
-    //         $ids = [];
-    //         foreach($item_ids as $item) {
-    //             array_push($ids, $item->id);
-    //         }
-
-    //         $line_ids = [];
-    //         $grand_total = 0;
-    //         $is_thesame_payment = false;
-    //         foreach($data['lines'] as $line) {
-    //             if(array_key_exists('id',$line)) {
-    //                 $item = Item::findOrFail($line['id']);
-    //             } else {
-    //                 $item = new Item();
-    //             }
-    //             $item->invoice_id = $invoice->id;
-    //             $item->description = $line['description'];
-    //             $item->quantity = $line['quantity'];
-    //             $item->price = $line['price'];
-
-    //             $grand_total = $grand_total + ($item->quantity * $item->price);
-
-    //             if(array_key_exists('id',$line)) {
-    //                 if($item->isDirty()) {
-    //                     $item->save();
-    //                     $is_thesame_payment = true;
-    //                 }
-    //                 array_push($line_ids, $line['id']);
-    //             } else {
-    //                 $item->save();
-    //                 $is_thesame_payment = true;
-    //             }
-    //         }
-
-    //         // return $grand_total;
-            
-    //         $array_difference = array_diff($ids, $line_ids);
-    //         $to_be_delete = [];
-    //         foreach ($array_difference as $difference) {
-    //             array_push($to_be_delete, $difference);
-    //         }
-
-    //         $to_be = Item::whereIn('id', $to_be_delete)->delete();
-        
-    //         $payment = Payment::findOrFail($data['payment']['id']);
-    //         $payment->invoice_id = $data['payment']['invoice_id'];
-    //         $payment->receipt_no = $data['payment']['receipt_no'];
-    //         $payment->in_payment_of = $data['payment']['in_payment_of'];
-    //         $payment->amount = $data['payment']['amount'];
-    //         $payment->status_id = $data['payment']['status_id'];
-
-    //         if($payment->isDirty()) {
-    //             $payment->save();
-    //         }
-
-    //         return $invoice;
-
-    //     }, 5);
-        
-
-    //     $apiResponse = new InvoiceResource($invoice);
-    //     return response($apiResponse->toJson(), Response::HTTP_CREATED);
-    // }
 
     /**
      * Remove the specified resource from storage.
